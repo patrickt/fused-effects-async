@@ -22,7 +22,7 @@ source-repository head
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Control.Effect.Async
+  exposed-modules:     Control.Effect.Concurrent.Async
 
 
   build-depends:       base ^>= 4.13.0.0
