@@ -22,11 +22,13 @@ source-repository head
 
 library
   hs-source-dirs:      src
-  exposed-modules:     FusedEffectsAsync
-                       
+  exposed-modules:     Control.Effect.Async
+
 
   build-depends:       base ^>= 4.13.0.0
-                     
+                     , async ^>= 2.2
+                     , fused-effects >= 1 && <2
+
 
   ghc-options:         -Wall
                        -Wincomplete-uni-patterns
@@ -48,7 +50,7 @@ test-suite fused-effects-async-test
 
   build-depends:       base ^>= 4.13.0.0
                      , fused-effects-async
-                     
+
 
   ghc-options:         -Wall
                        -threaded
