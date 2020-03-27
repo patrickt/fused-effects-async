@@ -57,14 +57,37 @@ module Control.Effect.Concurrent.Async
     waitEitherCatchSTM,
     waitEitherSTM_,
     waitBothSTM,
+
+    -- ** Linking
+    link,
+    linkOnly,
+    link2,
+    link2Only,
+    C.ExceptionInLinkedThread (..),
+
+    -- * Convenient utilities
+    race,
+    race_,
+    concurrently,
+    concurrently_,
+    mapConcurrently,
+    forConcurrently,
+    mapConcurrently_,
+    forConcurrently_,
+    replicateConcurrently,
+    replicateConcurrently_,
+    foldMapConcurrently,
+    C.Concurrently (..),
+    C.compareAsyncs,
   )
 where
 
-import           Control.Concurrent.Async (Async)
+import Control.Concurrent.Async (Async)
 import qualified Control.Concurrent.Async as C
-import           Control.Concurrent.STM (STM)
-import           Control.Effect.Lift
-import           Control.Exception (Exception, SomeException)
+import Control.Concurrent.STM (STM)
+import Control.Effect.Lift
+import Control.Exception (Exception, SomeException)
+import Data.Foldable (fold)
 
 -- | See @"Control.Concurrent.Async".'C.async'@.
 async :: Has (Lift IO) sig m => IO a -> m (Async a)
@@ -205,3 +228,69 @@ waitEitherSTM_ act go = sendM (C.waitEitherSTM_ act go)
 -- | See @"Control.Concurrent.Async".'C.waitBothSTM'@.
 waitBothSTM :: Has (Lift STM) sig m => Async a -> Async b -> m (a, b)
 waitBothSTM act go = sendM (C.waitBothSTM act go)
+
+-- | See "Control.Concurrent.Async".'C.link'@.
+link :: Has (Lift IO) sig m => Async a -> m ()
+link = sendM . C.link
+
+-- | See "Control.Concurrent.Async".'C.linkOnly'@.
+linkOnly ::
+  Has (Lift IO) sig m =>
+  (SomeException -> Bool) ->
+  Async a ->
+  m ()
+linkOnly shouldThrow = sendM . C.linkOnly shouldThrow
+
+-- | See "Control.Concurrent.Async".'C.link'@.
+link2 :: Has (Lift IO) sig m => Async a -> Async b -> m ()
+link2 go = sendM . C.link2 go
+
+-- | See "Control.Concurrent.Async".'C.link2Only'@.
+link2Only :: Has (Lift IO) sig m => (SomeException -> Bool) -> Async a -> Async b -> m ()
+link2Only act a = sendM . C.link2Only act a
+
+-- | See "Control.Concurrent.Async".'C.race'@.
+race :: IO a -> IO b -> IO (Either a b)
+race a = sendM . C.race a
+
+-- | See "Control.Concurrent.Async".'C.race_'@.
+race_ :: IO a -> IO b -> IO ()
+race_ a = sendM . C.race_ a
+
+-- | See "Control.Concurrent.Async".'C.concurrently'@.
+concurrently :: IO a -> IO b -> IO (a, b)
+concurrently a = sendM . C.concurrently a
+
+-- | See "Control.Concurrent.Async".'C.concurrently_'@.
+concurrently_ :: IO a -> IO b -> IO ()
+concurrently_ a = sendM . C.concurrently_ a
+
+-- | See "Control.Concurrent.Async".'C.mapConcurrently'@.
+mapConcurrently :: Traversable t => (a -> IO b) -> t a -> IO (t b)
+mapConcurrently a = sendM . C.mapConcurrently a
+
+-- | See "Control.Concurrent.Async".'C.forConcurrently'@.
+forConcurrently :: Traversable t => t a -> (a -> IO b) -> IO (t b)
+forConcurrently a = sendM . C.forConcurrently a
+
+-- | See "Control.Concurrent.Async".'C.mapConcurrently_'@.
+mapConcurrently_ :: Foldable f => (a -> IO b) -> f a -> IO ()
+mapConcurrently_ a = sendM . C.mapConcurrently_ a
+
+-- | See "Control.Concurrent.Async".'C.forConcurrently_'@.
+forConcurrently_ :: Foldable f => f a -> (a -> IO b) -> IO ()
+forConcurrently_ a = sendM . C.forConcurrently_ a
+
+-- | See "Control.Concurrent.Async".'C.replicateConcurrently'@.
+replicateConcurrently :: Int -> IO a -> IO [a]
+replicateConcurrently a = sendM . C.replicateConcurrently a
+
+-- | See "Control.Concurrent.Async".'C.replicateConcurrently'@.
+replicateConcurrently_ :: Int -> IO a -> IO ()
+replicateConcurrently_ a = sendM . C.replicateConcurrently_ a
+
+-- | Like 'mapConcurrently', but folding over the results when terminated.
+-- This is a @fused-effects-async@ extension, and is not present in
+-- "Control.Concurrent.Async".
+foldMapConcurrently :: (Has (Lift IO) sig m, Traversable f, Monoid x) => (a -> IO x) -> f a -> m x
+foldMapConcurrently act = sendM . fmap fold . mapConcurrently act
