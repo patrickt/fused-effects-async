@@ -32,13 +32,39 @@ module Control.Effect.Concurrent.Async
     uninterruptibleCancel,
     cancelWith,
     C.AsyncCancelled (..),
+
+    -- ** STM operations
+    waitSTM,
+    pollSTM,
+    waitCatchSTM,
+
+    -- ** Waiting for multiple 'Async's
+    waitAny,
+    waitAnyCatch,
+    waitAnyCancel,
+    waitAnyCatchCancel,
+    waitEither,
+    waitEitherCatch,
+    waitEitherCancel,
+    waitEitherCatchCancel,
+    waitEither_,
+    waitBoth,
+
+    -- ** Waiting for multiple 'Async's in STM
+    waitAnySTM,
+    waitAnyCatchSTM,
+    waitEitherSTM,
+    waitEitherCatchSTM,
+    waitEitherSTM_,
+    waitBothSTM,
   )
 where
 
-import Control.Concurrent.Async (Async)
+import           Control.Concurrent.Async (Async)
 import qualified Control.Concurrent.Async as C
-import Control.Effect.Lift
-import Control.Exception (Exception, SomeException)
+import           Control.Concurrent.STM (STM)
+import           Control.Effect.Lift
+import           Control.Exception (Exception, SomeException)
 
 -- | See @"Control.Concurrent.Async".'C.async'@.
 async :: Has (Lift IO) sig m => IO a -> m (Async a)
@@ -103,3 +129,79 @@ uninterruptibleCancel = sendM . C.uninterruptibleCancel
 -- | See @"Control.Concurrent.Async".'C.cancelWith'@.
 cancelWith :: (Has (Lift IO) sig m, Exception e) => Async a -> e -> m ()
 cancelWith act = sendM . C.cancelWith act
+
+-- | See @"Control.Concurrent.Async".'C.waitSTM'@.
+waitSTM :: Has (Lift STM) sig m => Async a -> m a
+waitSTM = sendM . C.waitSTM
+
+-- | See @"Control.Concurrent.Async".'C.pollSTM'@.
+pollSTM :: Has (Lift STM) sig m => Async a -> m (Maybe (Either SomeException a))
+pollSTM = sendM . C.pollSTM
+
+-- | See @"Control.Concurrent.Async".'C.waitCatchSTM'@.
+waitCatchSTM :: Has (Lift STM) sig m => Async a -> m (Either SomeException a)
+waitCatchSTM = sendM . C.waitCatchSTM
+
+-- | See @"Control.Concurrent.Async".'C.waitAny'@.
+waitAny :: Has (Lift IO) sig m => [Async a] -> m (Async a, a)
+waitAny = sendM . C.waitAny
+
+-- | See @"Control.Concurrent.Async".'C.waitAnyCatch'@.
+waitAnyCatch :: Has (Lift IO) sig m => [Async a] -> m (Async a, Either SomeException a)
+waitAnyCatch = sendM . C.waitAnyCatch
+
+-- | See @"Control.Concurrent.Async".'C.waitAnyCancel'@.
+waitAnyCancel :: Has (Lift IO) sig m => [Async a] -> m (Async a, a)
+waitAnyCancel = sendM . C.waitAnyCancel
+
+-- | See @"Control.Concurrent.Async".'C.waitAnyCatchCancel'@.
+waitAnyCatchCancel :: Has (Lift IO) sig m => [Async a] -> m (Async a, Either SomeException a)
+waitAnyCatchCancel = sendM . C.waitAnyCatchCancel
+
+-- | See @"Control.Concurrent.Async".'C.waitEither'@.
+waitEither :: Has (Lift IO) sig m => Async a -> Async b -> m (Either a b)
+waitEither act = sendM . C.waitEither act
+
+-- | See @"Control.Concurrent.Async".'C.waitEitherCatch'@.
+waitEitherCatch :: Has (Lift IO) sig m => Async a -> Async b -> m (Either (Either SomeException a) (Either SomeException b))
+waitEitherCatch go = sendM . C.waitEitherCatch go
+
+-- | See @"Control.Concurrent.Async".'C.waitEitherCancel'@.
+waitEitherCancel :: Has (Lift IO) sig m => Async a -> Async b -> m (Either a b)
+waitEitherCancel go = sendM . C.waitEitherCancel go
+
+-- | See @"Control.Concurrent.Async".'C.waitEitherCatchCancel'@.
+waitEitherCatchCancel :: Has (Lift IO) sig m => Async a -> Async b -> m (Either (Either SomeException a) (Either SomeException b))
+waitEitherCatchCancel go = sendM . C.waitEitherCatchCancel go
+
+-- | See @"Control.Concurrent.Async".'C.waitEither'@.
+waitEither_ :: Has (Lift IO) sig m => Async a -> Async b -> m ()
+waitEither_ act = sendM . C.waitEither_ act
+
+-- | See @"Control.Concurrent.Async".'C.waitBoth'@.
+waitBoth :: Has (Lift IO) sig m => Async a -> Async b -> m (a, b)
+waitBoth act = sendM . C.waitBoth act
+
+-- | See @"Control.Concurrent.Async".'C.waitAnySTM'@.
+waitAnySTM :: Has (Lift STM) sig m => [Async a] -> m (Async a, a)
+waitAnySTM = sendM . C.waitAnySTM
+
+-- | See @"Control.Concurrent.Async".'C.waitAnyCatchSTM'@.
+waitAnyCatchSTM :: Has (Lift STM) sig m => [Async a] -> m (Async a, Either SomeException a)
+waitAnyCatchSTM = sendM . C.waitAnyCatchSTM
+
+-- | See @"Control.Concurrent.Async".'C.waitEitherSTM'@.
+waitEitherSTM :: Has (Lift STM) sig m => Async a -> Async b -> m (Either a b)
+waitEitherSTM act = sendM . C.waitEitherSTM act
+
+-- | See @"Control.Concurrent.Async".'C.waitEitherCatchSTM'@.
+waitEitherCatchSTM :: Has (Lift STM) sig m => Async a -> Async b -> m (Either (Either SomeException a) (Either SomeException b))
+waitEitherCatchSTM act go = sendM (C.waitEitherCatchSTM act go)
+
+-- | See @"Control.Concurrent.Async".'C.waitEitherSTM'@.
+waitEitherSTM_ :: Has (Lift STM) sig m => Async a -> Async b -> m ()
+waitEitherSTM_ act go = sendM (C.waitEitherSTM_ act go)
+
+-- | See @"Control.Concurrent.Async".'C.waitBothSTM'@.
+waitBothSTM :: Has (Lift STM) sig m => Async a -> Async b -> m (a, b)
+waitBothSTM act go = sendM (C.waitBothSTM act go)
