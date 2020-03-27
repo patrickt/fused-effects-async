@@ -4,12 +4,19 @@ module Control.Effect.Async
   ( -- * Asynchronous actions
     Async,
 
-    -- * Spawning
+    -- ** Spawning
     async,
     asyncBound,
     asyncOn,
     asyncWithUnmask,
     asyncOnWithUnmask,
+
+    -- ** Spawning with automatic 'cancel'ation
+    withAsync,
+    withAsyncBound,
+    withAsyncOn,
+    withAsyncWithUnmask,
+    withAsyncOnWithUnmask,
   )
 where
 
@@ -36,3 +43,23 @@ asyncWithUnmask x = sendM (C.asyncWithUnmask x)
 -- | See @"Control.Concurrent.Async".'C.asyncOnWithUnmask'@.
 asyncOnWithUnmask :: Has (Lift IO) sig m => Int -> ((forall b. IO b -> IO b) -> IO a) -> m (Async a)
 asyncOnWithUnmask cpu act = sendM (C.asyncOnWithUnmask cpu act)
+
+-- | See @"Control.Concurrent.Async".'C.withAsync'@.
+withAsync :: Has (Lift IO) sig m => IO a -> m (Async a)
+withAsync = sendM . C.withAsync
+
+-- | See @"Control.Concurrent.Async".'C.withAsyncBound'@.
+withAsyncBound :: Has (Lift IO) sig m => IO a -> m (Async a)
+withAsyncBound = sendM . C.withAsyncBound
+
+-- | See @"Control.Concurrent.Async".'C.withAsyncOn'@.
+withAsyncOn :: Has (Lift IO) sig m => Int -> IO a -> m (Async a)
+withAsyncOn cpu = sendM . C.withAsyncOn cpu
+
+-- | See @"Control.Concurrent.Async".'C.withAsyncWithUnmask'@.
+withAsyncWithUnmask :: Has (Lift IO) sig m => ((forall b. IO b -> IO b) -> IO a) -> m (Async a)
+withAsyncWithUnmask x = sendM (C.withAsyncWithUnmask x)
+
+-- | See @"Control.Concurrent.Async".'C.withAsyncOnWithUnmask'@.
+withAsyncOnWithUnmask :: Has (Lift IO) sig m => Int -> ((forall b. IO b -> IO b) -> IO a) -> m (Async a)
+withAsyncOnWithUnmask cpu act = sendM (C.withAsyncOnWithUnmask cpu act)
